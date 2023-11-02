@@ -6,6 +6,10 @@ const app = express();
 const cors = require('cors')
 const fs = require('fs')
 
+//deploy
+const ws = require('ws')
+//deploy
+
 app.use(express.static('public'));
 //limiting image size to 50mb
 app.use(express.json({ limit: '50mb' }));
@@ -20,6 +24,21 @@ const blogRouter = require('./Routes/BlogRouter');
 // const movieRouter = require('./Routes/MovieRouter');
 // const netflixRouter = require('./Routes/NetflixAuthRoute');
 
+// deploy
+const wsServer = new ws.Server({
+	server:app.listen(3000),
+	host:"localhost",
+	path:"/"
+})
+
+wsServer.on("connection",(w) => {
+	console.log("someone connected");
+	w.on("message",(msg) => {
+		console.log("got message",msg);
+		w.send(msg)
+	})
+})
+// deploy
 app.use((err,req,res,next) => {
 	if(req.file) {
 		fs.unlink(req.file.path, err => {
