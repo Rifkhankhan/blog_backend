@@ -46,14 +46,19 @@ app.use((err,req,res,next) => {
 		})
 	}
 })
+
+app.use(express.static(path.join(__dirname + '/Public')));
+
 //connect mongodb
+const PORT = process.env.PORT || 5000
+
 mongoose
 	.connect(
 		'mongodb+srv://Rifkhan:blogs123@cluster0.zwc35pi.mongodb.net/?retryWrites=true&w=majority'
 	)
 	.then(() => {
 		console.log('connected to Database');
-		app.listen(5000); // start Node + Express server on port 5000  
+		app.listen(PORT); // start Node + Express server on port 5000  
 	})
 	.catch((error) => {
 		console.log(error);
@@ -111,10 +116,3 @@ app.use(
 	'/uploads',
 	express.static(path.join('uploads'))
 );
-
-// const PORT = process.env.PORT || 5000
-
-// //running the app in previously defined port
-// const server = app.listen(PORT, () => {
-// 	console.log(`Server is up and running on: ${PORT}`)
-// })
