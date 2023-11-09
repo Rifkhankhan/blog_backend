@@ -17,7 +17,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors());
 // app.use('/uploads', express.static(path.join('Server/uploads')));
 app.use(cors({
-	origin:"https://blog-backend-7kvy.onrender.com"
+	origin:"https://myblogs-dk3t.onrender.com"
 }))
 app.use(express.static(__dirname+'/'));
 
@@ -62,7 +62,9 @@ mongoose
 	)
 	.then(() => {
 		console.log('connected to Database');
-		app.listen(PORT); // start Node + Express server on port 5000  
+		app.listen(PORT,"https://myblogs-dk3t.onrender.com", ()=>{
+			console.log(`server is runnig ${PORT}`);
+		}); // start Node + Express server on port 5000  
 	})
 	.catch((error) => {
 		console.log(error);
