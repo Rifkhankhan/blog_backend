@@ -62,9 +62,7 @@ mongoose
 	)
 	.then(() => {
 		console.log('connected to Database');
-		app.listen(PORT,"https://myblogs-dk3t.onrender.com", ()=>{
-			console.log(`server is runnig ${PORT}`);
-		}); // start Node + Express server on port 5000  
+		app.listen(PORT); // start Node + Express server on port 5000  
 	})
 	.catch((error) => {
 		console.log(error);
