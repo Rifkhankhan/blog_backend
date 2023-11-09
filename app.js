@@ -16,6 +16,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors());
 // app.use('/uploads', express.static(path.join('Server/uploads')));
+app.use(cors({
+	origin:"https://blog-backend-7kvy.onrender.com"
+}))
 app.use(express.static(__dirname+'/'));
 
 const blogRouter = require('./Routes/BlogRouter');
@@ -54,6 +57,7 @@ const PORT = process.env.PORT || 5000
 
 mongoose
 	.connect(
+		
 		'mongodb+srv://Rifkhan:blogs123@cluster0.zwc35pi.mongodb.net/?retryWrites=true&w=majority'
 	)
 	.then(() => {
