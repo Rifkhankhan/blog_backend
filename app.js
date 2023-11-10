@@ -16,9 +16,12 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors());
 // app.use('/uploads', express.static(path.join('Server/uploads')));
+
+//need to uncommand to deploy
 app.use(cors({
 	origin:"https://myblogs-dk3t.onrender.com"
 }))
+
 app.use(express.static(__dirname+'/'));
 
 const blogRouter = require('./Routes/BlogRouter');
@@ -27,6 +30,7 @@ const blogRouter = require('./Routes/BlogRouter');
 // const movieRouter = require('./Routes/MovieRouter');
 // const netflixRouter = require('./Routes/NetflixAuthRoute');
 
+//need to uncommand to deploy
 // deploy
 const wsServer = new ws.Server({
 	server:app.listen(3000),
@@ -41,6 +45,7 @@ wsServer.on("connection",(w) => {
 		w.send(msg)
 	})
 })
+
 // deploy
 app.use((err,req,res,next) => {
 	if(req.file) {

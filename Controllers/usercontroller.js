@@ -20,7 +20,7 @@ cloudinary.config({
 const UserModel = require('../Models/User');
 // const sendEmail = require('../utils/sendEmail');
 // const uuid = require('uuid');
-const ProductModel = require('../Models/ProductModel');
+// const ProductModel = require('../Models/ProductModel');
 
 //get user Data 
 exports.getUserData = async (req,res,next) => {  
@@ -178,8 +178,8 @@ exports.usersignin = async (req, res) => {
 			'9892c70a8da9ad71f1829ad03c115408',
 			{ expiresIn: '1h' }
 		);
-		user.authToken = token;
-		await user.save()
+		// user.authToken = token;
+		// await user.save()
 
 		//sending the user object and token as the response
 		res.status(200).json({ success: true, token,user:user });
@@ -239,8 +239,7 @@ exports.usersignin = async (req, res) => {
 
 //user sign up controller
 exports.usersignup = async (req, res) => {
-	const { name, email, age, password } =
-		req.body;
+	const { name, email, password } = req.body;
 
 	let users;
 	try {
@@ -249,7 +248,7 @@ exports.usersignup = async (req, res) => {
 		return next(err);
 	}
 
-	let homeDeliveryUserId = 'HomeDelivery' + users.length;
+	let UserId = 'RifkhanApplicationId' + users.length;
 
 	try {
 		//checking email already exists
@@ -265,8 +264,7 @@ exports.usersignup = async (req, res) => {
 			name,
 			email,
 			password,
-			age,
-			homeDeliveryUserId: homeDeliveryUserId,
+			homeDeliveryUserId: UserId,
 		});
 
 		//creating a token
