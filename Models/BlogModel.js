@@ -7,7 +7,10 @@ const BlogSchema = new Schema({
     parent : String,
     child : String,
     desc : String,
-    userId : String,
+    user : {
+        id:String,
+        name:String
+    },
     image : String,
     likes:[], 
     comments: [,{

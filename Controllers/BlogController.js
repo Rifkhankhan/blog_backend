@@ -10,9 +10,8 @@ exports.CreateBlog = async (req, res, next) => {
         desc:req.body.desc,
         child:req.body.child,
         parent:req.body.parent,
-        userId:req.body.userId,
+        user:req.body.user,
         image:req.body.image,
-		// image: url + '/uploads/' + req.file.filename,
 
 	});
 
