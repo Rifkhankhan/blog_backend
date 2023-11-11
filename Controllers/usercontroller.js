@@ -173,13 +173,56 @@ exports.usersignin = async (req, res) => {
 			return res.status(408).json({ message: 'User access denied!' });
 
 		//creating a token
+		const secretKey = '9892c70a8da9ad71f1829ad03c115408'
 		const token = jwt.sign(
+			{ email: user.email, id: user._id ,secretKey:secretKey},
+			secretKey,
+			{ expiresIn: '1h' }
+		);
+
+		
+		//sending the user object and token as the response
+		res.status(200).json({ success: true, token,user:user });
+	} catch (error) {
+		res
+			.status(500)
+			.json({ message: 'Something went wrong', error: error.message });
+	}
+};
+
+exports.autoLogin = async (req, res) => { 
+	
+	const token = req.body.token
+	const cleanToken = token.replace(/^"(.*)"$/,'$1')
+
+	const secretKey = '9892c70a8da9ad71f1829ad03c115408'
+	//verify and decode the token
+
+	let userId;
+	jwt.verify(cleanToken,secretKey,(err,decode) => { 
+		if(err){
+			console.log("Error verifying token",err.message);
+		} else {
+		
+			userId = decode.id
+		}
+	})
+
+	try {
+		//finding user by email
+		const user = await UserModel.findById(userId);
+
+		//if user doesn't exist
+		if (!user) return res.status(404).json({ message: "User doesn't exist" });
+
+		
+		//creating a token
+		const token = jwt.sign( 
 			{ email: user.email, id: user._id },
 			'9892c70a8da9ad71f1829ad03c115408',
 			{ expiresIn: '1h' }
 		);
-		// user.authToken = token;
-		// await user.save()
+	
 
 		//sending the user object and token as the response
 		res.status(200).json({ success: true, token,user:user });
