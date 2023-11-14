@@ -345,7 +345,7 @@ exports.forgotPassword = async (req, res) => {
 		await user.save()
 
 		// Create reset url to email to provided email
-		const resetPasswordUrl = `http://localhost:3000/reset/${resetPasswordToken}`
+		const resetPasswordUrl = `https://myblogs-dk3t.onrender.com/reset/${resetPasswordToken}`
 
 		// HTML Message
 		const message = `
