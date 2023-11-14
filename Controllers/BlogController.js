@@ -157,26 +157,26 @@ exports.getBlog = async (req, res, next) => {
 // 	}
 // };
 
-// //like and dislike
-// exports.likeItem = async (req, res) => {
-// 	const productId = req.params.id;
-// 	const {userId} = req.body
-// 	try {
-// 		const product = await ProductModel.findById(productId);
-// 		if (!product.likes.includes(userId)) {
-// 			await product.updateOne({ $push: { likes: userId } });
-// 			// if (post.dislikes.includes(userId)){
-// 			// 	await post.updateOne({ $pull: { dislikes: userId } });
-// 			// }
-// 			res.status(200).json({ status: 'Product Liked',item:product });
-// 		} else {
-// 			await product.updateOne({ $pull: { likes: userId } });
-// 			res.status(200).json({ status: 'Product UnLiked',item:product });
-// 		}
-// 	} catch (error) {
-// 		res.status(500).json({ status: 'Error with Like', error: error.message });
-// 	}
-// };
+//like and dislike
+exports.toggleLikeBlog = async (req, res) => {
+	console.log(req.body);
+	
+	try {
+		const product = await ProductModel.findById(req.body.blogId);
+		if (!product.likes.includes(req.body.userId)) {
+			await product.updateOne({ $push: { likes: req.body.userId } });
+			// if (post.dislikes.includes(userId)){
+			// 	await post.updateOne({ $pull: { dislikes: userId } });
+			// }
+			res.status(200).json({ status: 'Product Liked',item:product });
+		} else {
+			await product.updateOne({ $pull: { likes: req.body.userId } });
+			res.status(200).json({ status: 'Product UnLiked',item:product });
+		}
+	} catch (error) {
+		res.status(500).json({ status: 'Error with Like', error: error.message });
+	}
+};
 
 // //buy a product and put pending list
 // exports.buyProduct = async (req, res) => {

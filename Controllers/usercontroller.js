@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const cloudinary = require('cloudinary').v2;
+const nodemailer = require('nodemailer')
+const sendEmail = require('../utils/sendEmail')
 
 // Return "https" URLs by setting secure: true
 cloudinary.config({
@@ -326,6 +328,58 @@ exports.usersignup = async (req, res) => {
 			.json({ message: 'Something went wrong', error: error.message });
 	}
 };
+
+exports.forgotPassword = async (req, res) => {
+	const { email } = req.body
+	try {
+		//finding user by email
+		const user = await UserModel.findOne({ email})
+
+		//if user doesn't exist
+		if (!user)
+			return res.status(400).json({ message: 'No user with this email' })
+
+		// Reset Token Gen and add to database hashed (private) version of token
+		const resetPasswordToken = user.getResetPasswordToken()
+
+		await user.save()
+
+		// Create reset url to email to provided email
+		const resetPasswordUrl = `http://localhost:3000/reset/${resetPasswordToken}`
+
+		// HTML Message
+		const message = `
+            <h1>You have requested a password reset</h1>
+            <p>Please click on this link to update your password!</p>
+            <a href=${resetPasswordUrl} clicktracking=off>${resetPasswordUrl}</a> 
+        `
+
+		try {
+			//sending the the email
+			await sendEmail({
+				to: email,
+				subject: 'Password Reset Request',
+				text: message
+			})
+			res.status(200).json({ success: true, data: 'Email Sent' })
+		} catch (error) {
+			//if the email sending failed remove reset token
+			user.resetPasswordToken = undefined
+			user.resetPasswordExpire = undefined
+
+			await user.save()
+
+			res
+				.status(500)
+				.json({ message: 'Email could not be sent', error: error.message })
+		}
+	} catch (error) {
+		res
+			.status(500)
+			.json({ message: 'Something went wrong', error: error.message })
+	}
+}
+
 
 //update user controller
 exports.updateUser = async (req, res) => {
