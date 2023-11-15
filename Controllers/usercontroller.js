@@ -1,239 +1,226 @@
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-const cloudinary = require('cloudinary').v2;
+const bcrypt = require('bcrypt')
+const crypto = require('crypto')
+const jwt = require('jsonwebtoken')
+const cloudinary = require('cloudinary').v2
 const nodemailer = require('nodemailer')
 const sendEmail = require('../utils/sendEmail')
+const transporter = require('../email-config')
 
 // Return "https" URLs by setting secure: true
 cloudinary.config({
-  secure: true
-});
-
+	secure: true
+})
 
 // for mail
-// const mailgun = require('mailgun-js');  
+// const mailgun = require('mailgun-js');
 // const DOMAIN = '';
 // const mg = mailgun({ apiKey: process.env.MAILGUN_APIKEY, domain: DOMAIN });
 
 // loadash
 // const lodash = require('lodash');
 
-const UserModel = require('../Models/User');
+const UserModel = require('../Models/User')
 // const sendEmail = require('../utils/sendEmail');
 // const uuid = require('uuid');
 // const ProductModel = require('../Models/ProductModel');
 
-//get user Data 
-exports.getUserData = async (req,res,next) => {  
-	const {id} = req.params
+//get user Data
+exports.getUserData = async (req, res, next) => {
+	const { id } = req.params
 
-	try{
-		const user = await UserModel.findById(id);
+	try {
+		const user = await UserModel.findById(id)
 		res.json(user)
-	}
-	catch(err)
-	{
-		res
-		.status(500)
-		.json({ message: 'Something went wrong', err: err.message });
+	} catch (err) {
+		res.status(500).json({ message: 'Something went wrong', err: err.message })
 	}
 }
 
 //get user Data using token
-exports.getAuthData = async (req,res,next) => {
-	console.log(req.params.token);
-	try{
-		const user = await UserModel.find({authToken:req.params.token});
-		console.log(user);
+exports.getAuthData = async (req, res, next) => {
+	console.log(req.params.token)
+	try {
+		const user = await UserModel.find({ authToken: req.params.token })
+		console.log(user)
 		res.json(user)
-	}
-	catch(err)
-	{
-		res
-		.status(500)
-		.json({ message: 'Something went wrong', err: err.message });
+	} catch (err) {
+		res.status(500).json({ message: 'Something went wrong', err: err.message })
 	}
 }
-exports.increaseCardCount = async (req,res,next) => {
+exports.increaseCardCount = async (req, res, next) => {
+	const { uid, pid } = req.params
 
-	const {uid,pid} = req.params
-
-	try{
-		const user = await UserModel.findById(uid);
+	try {
+		const user = await UserModel.findById(uid)
 		const cardItem = user.card.find(product => product._id.toString() === pid)
-		cardItem.count++;
-		user.card = user.card.filter(pro => pro._id.toString() !== pid)  
+		cardItem.count++
+		user.card = user.card.filter(pro => pro._id.toString() !== pid)
 		user.card.push(cardItem)
 		user.card.reverse()
 		await user.save()
-		res.json({mesg:"Successfully increased item into your card!",card:user.card})
-
-	
-	} catch(error) {
-		res
-			.status(500)
-			.json({ message: 'Something went wrong', error: error.message });
-	}
-}
-
-exports.decreaseCardCount = async (req,res,next) => {
-	const {uid,pid} = req.params
-
-	try{
-		const user = await UserModel.findById(uid);
-		const cardItem = user.card.find(product => product._id.toString() === pid)
-		if(cardItem.count > 1){
-			cardItem.count--;
-
-			user.card = user.card.filter(pro => pro._id.toString() !== pid)  
-			user.card.push(cardItem)
-	
-			await user.save()
-			res.json({mesg:"Successfully increased item into your card!",card:user.card})
-		} else{
-			
-			user.card = user.card.filter(pro => pro._id.toString() !== pid)  
-			await user.save()
-			res.json({mesg:"Successfully increased item into your card!",card:user.card})
-		}
-		
-		
-
-	
-	} catch(error) {
-		res
-			.status(500)
-			.json({ message: 'Something went wrong', error: error.message });
-	}
-}
-exports.addToLike = async (req,res,next) => {}
-exports.buyProduct = async (req,res,next) => {}
-
-exports.getCardList = async (req, res, next) => {
-	const {id} = req.params
-	try {
-		let user = await UserModel.findById(id);
-		
-		res.json({products:user.card});
-	} catch (err) {
-		return next(err);
-	}
-};
-exports.addToCard = async (req,res,next) => {
-	const {pid} = req.params;
-	const {uid} = req.params
-
-	try{
-		const user = await UserModel.findById(uid);  
-		// console.log(user.card);
-		for(card of user.card) {
-			if(card._id.toString() === pid) {
-				res.json({mesg:"Item is already added!"})
-				return
-			}
-		}   
-
-		let product = await ProductModel.findById(pid)   
-		product = {...product._doc,count:1}
-		user.card.push(product)
-		await user.save()
-		console.log(user.card);
-		res.json({mesg:"Successfully Added into your card!",card:user})
-
+		res.json({
+			mesg: 'Successfully increased item into your card!',
+			card: user.card
+		})
 	} catch (error) {
 		res
 			.status(500)
-			.json({ message: 'Something went wrong', error: error.message });
+			.json({ message: 'Something went wrong', error: error.message })
+	}
+}
+
+exports.decreaseCardCount = async (req, res, next) => {
+	const { uid, pid } = req.params
+
+	try {
+		const user = await UserModel.findById(uid)
+		const cardItem = user.card.find(product => product._id.toString() === pid)
+		if (cardItem.count > 1) {
+			cardItem.count--
+
+			user.card = user.card.filter(pro => pro._id.toString() !== pid)
+			user.card.push(cardItem)
+
+			await user.save()
+			res.json({
+				mesg: 'Successfully increased item into your card!',
+				card: user.card
+			})
+		} else {
+			user.card = user.card.filter(pro => pro._id.toString() !== pid)
+			await user.save()
+			res.json({
+				mesg: 'Successfully increased item into your card!',
+				card: user.card
+			})
+		}
+	} catch (error) {
+		res
+			.status(500)
+			.json({ message: 'Something went wrong', error: error.message })
+	}
+}
+exports.addToLike = async (req, res, next) => {}
+exports.buyProduct = async (req, res, next) => {}
+
+exports.getCardList = async (req, res, next) => {
+	const { id } = req.params
+	try {
+		let user = await UserModel.findById(id)
+
+		res.json({ products: user.card })
+	} catch (err) {
+		return next(err)
+	}
+}
+exports.addToCard = async (req, res, next) => {
+	const { pid } = req.params
+	const { uid } = req.params
+
+	try {
+		const user = await UserModel.findById(uid)
+		// console.log(user.card);
+		for (card of user.card) {
+			if (card._id.toString() === pid) {
+				res.json({ mesg: 'Item is already added!' })
+				return
+			}
+		}
+
+		let product = await ProductModel.findById(pid)
+		product = { ...product._doc, count: 1 }
+		user.card.push(product)
+		await user.save()
+		console.log(user.card)
+		res.json({ mesg: 'Successfully Added into your card!', card: user })
+	} catch (error) {
+		res
+			.status(500)
+			.json({ message: 'Something went wrong', error: error.message })
 	}
 }
 //user sign in controller
 exports.usersignin = async (req, res) => {
-	const { email, password } = req.body;
+	const { email, password } = req.body
 
 	// Check if email and password is provided
 	if (!email || !password)
 		return res
 			.status(400)
-			.json({ message: 'Please provide an email and password' });
+			.json({ message: 'Please provide an email and password' })
 
 	try {
 		//finding user by email
-		const user = await UserModel.findOne({ email }).select('+password');
+		const user = await UserModel.findOne({ email }).select('+password')
 
 		//if user doesn't exist
-		if (!user) return res.status(404).json({ message: "User doesn't exist" });
+		if (!user) return res.status(404).json({ message: "User doesn't exist" })
 
 		//compare the provided password with the password in the database
-		const ispasswordCorrect = await bcrypt.compare(password, user.password);
+		const ispasswordCorrect = await bcrypt.compare(password, user.password)
 
 		//if passwords don't match
 		if (!ispasswordCorrect)
-			return res.status(409).json({ message: 'Invalid credentials' });
+			return res.status(409).json({ message: 'Invalid credentials' })
 
 		if (user.status === false)
-			return res.status(408).json({ message: 'User access denied!' });
+			return res.status(408).json({ message: 'User access denied!' })
 
 		//creating a token
 		const secretKey = '9892c70a8da9ad71f1829ad03c115408'
 		const token = jwt.sign(
-			{ email: user.email, id: user._id ,secretKey:secretKey},
+			{ email: user.email, id: user._id, secretKey: secretKey },
 			secretKey,
 			{ expiresIn: '1h' }
-		);
+		)
 
-		
 		//sending the user object and token as the response
-		res.status(200).json({ success: true, token,user:user });
+		res.status(200).json({ success: true, token, user: user })
 	} catch (error) {
 		res
 			.status(500)
-			.json({ message: 'Something went wrong', error: error.message });
+			.json({ message: 'Something went wrong', error: error.message })
 	}
-};
+}
 
-exports.autoLogin = async (req, res) => { 
-	
+exports.autoLogin = async (req, res) => {
 	const token = req.body.token
-	const cleanToken = token.replace(/^"(.*)"$/,'$1')
+	const cleanToken = token.replace(/^"(.*)"$/, '$1')
 
 	const secretKey = '9892c70a8da9ad71f1829ad03c115408'
 	//verify and decode the token
 
-	let userId;
-	jwt.verify(cleanToken,secretKey,(err,decode) => { 
-		if(err){
-			console.log("Error verifying token",err.message);
+	let userId
+	jwt.verify(cleanToken, secretKey, (err, decode) => {
+		if (err) {
+			console.log('Error verifying token', err.message)
 		} else {
-		
 			userId = decode.id
 		}
 	})
 
 	try {
 		//finding user by email
-		const user = await UserModel.findById(userId);
+		const user = await UserModel.findById(userId)
 
 		//if user doesn't exist
-		if (!user) return res.status(404).json({ message: "User doesn't exist" });
+		if (!user) return res.status(404).json({ message: "User doesn't exist" })
 
-		
 		//creating a token
-		const token = jwt.sign( 
+		const token = jwt.sign(
 			{ email: user.email, id: user._id },
 			'9892c70a8da9ad71f1829ad03c115408',
 			{ expiresIn: '1h' }
-		);
-	
+		)
 
 		//sending the user object and token as the response
-		res.status(200).json({ success: true, token,user:user });
+		res.status(200).json({ success: true, token, user: user })
 	} catch (error) {
 		res
 			.status(500)
-			.json({ message: 'Something went wrong', error: error.message });
+			.json({ message: 'Something went wrong', error: error.message })
 	}
-};
+}
 
 //user sign in controller
 // exports.adminSignIn = async (req, res) => {
@@ -284,33 +271,33 @@ exports.autoLogin = async (req, res) => {
 
 //user sign up controller
 exports.usersignup = async (req, res) => {
-	const { name, email, password } = req.body;
+	const { name, email, password } = req.body
 
-	let users;
+	let users
 	try {
-		users = await UserModel.find();
+		users = await UserModel.find()
 	} catch (err) {
-		return next(err);
+		return next(err)
 	}
 
-	let UserId = 'RifkhanApplicationId' + users.length;
+	let UserId = 'RifkhanApplicationId' + users.length
 
 	try {
 		//checking email already exists
-		const checkEmail = await UserModel.findOne({ email });
+		const checkEmail = await UserModel.findOne({ email })
 
 		if (checkEmail)
 			return res
 				.status(409)
-				.json({ message: 'User with this email already exists' });
+				.json({ message: 'User with this email already exists' })
 
 		//creating a new user
 		const user = await UserModel.create({
 			name,
 			email,
 			password,
-			homeDeliveryUserId: UserId,
-		});
+			homeDeliveryUserId: UserId
+		})
 
 		//creating a token
 
@@ -318,61 +305,10 @@ exports.usersignup = async (req, res) => {
 			{ email: user.email, id: user._id },
 			'9892c70a8da9ad71f1829ad03c115408',
 			{ expiresIn: '1h' }
-		);
+		)
 
 		//sending the user object and token as the response
-		res.status(200).json({ success: true, result: user, token });
-	} catch (error) {
-		res
-			.status(500)
-			.json({ message: 'Something went wrong', error: error.message });
-	}
-};
-
-exports.forgotPassword = async (req, res) => {
-	const { email } = req.body
-	try {
-		//finding user by email
-		const user = await UserModel.findOne({ email})
-
-		//if user doesn't exist
-		if (!user)
-			return res.status(400).json({ message: 'No user with this email' })
-
-		// Reset Token Gen and add to database hashed (private) version of token
-		const resetPasswordToken = user.getResetPasswordToken()
-
-		await user.save()
-
-		// Create reset url to email to provided email
-		const resetPasswordUrl = `https://myblogs-dk3t.onrender.com/reset/${resetPasswordToken}`
-
-		// HTML Message
-		const message = `
-            <h1>You have requested a password reset</h1>
-            <p>Please click on this link to update your password!</p>
-            <a href=${resetPasswordUrl} clicktracking=off>${resetPasswordUrl}</a> 
-        `
-
-		try {
-			//sending the the email
-			await sendEmail({
-				to: email,
-				subject: 'Password Reset Request',
-				text: message
-			})
-			res.status(200).json({ success: true, data: 'Email Sent' })
-		} catch (error) {
-			//if the email sending failed remove reset token
-			user.resetPasswordToken = undefined
-			user.resetPasswordExpire = undefined
-
-			await user.save()
-
-			res
-				.status(500)
-				.json({ message: 'Email could not be sent', error: error.message })
-		}
+		res.status(200).json({ success: true, result: user, token })
 	} catch (error) {
 		res
 			.status(500)
@@ -380,74 +316,67 @@ exports.forgotPassword = async (req, res) => {
 	}
 }
 
-
 //update user controller
 exports.updateUser = async (req, res) => {
-	let userID = req.params.id;
-	
-   
-	try {  
+	let userID = req.params.id
+
+	try {
 		let data = req.body
-		const user = await UserModel.findById(userID);
-		console.log(req.body.password.length);
-		if(req.body.password.length > 20) {
-			console.log('not changed');
+		const user = await UserModel.findById(userID)
+		console.log(req.body.password.length)
+		if (req.body.password.length > 20) {
+			console.log('not changed')
 			//find user by userID and update the user with provided data
 			const userData = await UserModel.findByIdAndUpdate(userID, data, {
 				new: true
-			});
+			})
 
 			// update token
 			const token = jwt.sign(
 				{ email: userData.email, id: userData._id },
 				'9892c70a8da9ad71f1829ad03c115408',
 				{ expiresIn: '1h' }
-			);
+			)
 
 			//sending the status message successful
 			res.status(200).json({
 				success: true,
 				result: userData,
 				token
-			});
+			})
 		} else {
-			console.log('changed');
-			data.password = await bcrypt.hash(req.body.password, 12);  
+			console.log('changed')
+			data.password = await bcrypt.hash(req.body.password, 12)
 
 			//find user by userID and update the user with provided data
 			const userData = await UserModel.findByIdAndUpdate(userID, data, {
 				new: true
-			});
+			})
 
-			data.password = await bcrypt.hash(req.body.password, 12);
-				// update token
+			data.password = await bcrypt.hash(req.body.password, 12)
+			// update token
 			const token = jwt.sign(
 				{ email: userData.email, id: userData._id },
 				'9892c70a8da9ad71f1829ad03c115408',
 				{ expiresIn: '1h' }
-			);
+			)
 
 			//sending the status message successful
 			res.status(200).json({
 				success: true,
 				result: userData,
 				token
-			});
+			})
 		}
-	
 
 		//encrypted password
 		//$2b$12$V8GXUv2UDNlBNW5LLMzeLeQyyKjfHD6jHdEh5y3mNx9n7g32aHR2a
-		
-	
 	} catch (error) {
 		res
 			.status(500)
-			.json({ message: 'Something went wrong', error: error.message });
+			.json({ message: 'Something went wrong', error: error.message })
 	}
-
-};
-
+}
 
 // Activation function
 // exports.Activation = async (req, res, next) => {
@@ -775,102 +704,116 @@ exports.updateUser = async (req, res) => {
 // };
 
 // forgot password
-// exports.forgotPassword = async (req, res) => {
-// 	const { email } = req.body;
+exports.forgotPassword = async (req, res) => {
+	const { email } = req.body
 
-// 	try {
-// 		//finding user by email
-// 		const user = await User.findOne({ email });
+	try {
+		//finding user by email
+		const user = await UserModel.findOne({ email })
 
-// 		//if user doesn't exist
-// 		if (!user)
-// 			return res.status(404).json({ message: 'No user with this email' });
+		//if user doesn't exist
+		if (!user)
+			return res.status(400).json({ message: 'No user with this email' })
 
-// 		// Reset Token Gen and add to database hashed (private) version of token
-// 		const resetPasswordToken = user.getResetPasswordToken();
+		// Reset Token Gen and add to database hashed (private) version of token
+		const resetPasswordToken = user.getResetPasswordToken()
+		console.log("resetPasswordToken : ",resetPasswordToken);
+		await user.save()
 
-// 		await user.save();
+		// Create reset url to email to provided email
+		const resetPasswordUrl = `https://myblogs-dk3t.onrender.com/reset/${resetPasswordToken}`
 
-// 		// Create reset url to email to provided email
-// 		const resetPasswordUrl = `http://44.202.187.100:3000/password-reset/${resetPasswordToken}`;
+		// HTML Message
+		const message = `
+            <h1>You have requested a password reset</h1>
+            <p>Please click on this link to update your password!</p>
+            <a href=${resetPasswordUrl} clicktracking=off>${resetPasswordUrl}</a>
+        `
 
-// 		// HTML Message
-// 		const message = `
-//             <h1>You have requested a password reset</h1>
-//             <p>Please click on this link to update your password!</p>
-//             <a href=${resetPasswordUrl} clicktracking=off>${resetPasswordUrl}</a>
-//         `;
+		var transporter = nodemailer.createTransport({
+			service: 'gmail',
+			auth: {
+				user: 'aallahu563@gmail.com',
+				pass: 'pspk bsyv ywlp taar'
+			}
+		})
 
-// 		try {
-// 			//sending the the email
-// 			await sendEmail({
-// 				to: user.email,
-// 				subject: 'Password Reset Request',
-// 				text: message
-// 			});
-// 			res.status(200).json({ success: true, data: 'Email Sent' });
-// 		} catch (error) {
-// 			//if the email sending failed remove reset token
-// 			user.resetPasswordToken = undefined;
-// 			user.resetPasswordExpire = undefined;
+		var mailOptions = {
+			from: 'aallahu563@gmail.com',
+			to: email,
+			subject: 'Password Reset',
+			text: resetPasswordUrl
+		}
 
-// 			await user.save();
+		transporter.sendMail(mailOptions, function (error, info) {
+			if (error) {
+				console.log(error)
+				res.status(400).send({ message: 'Email not sent', success: false })
+			} else {
+				console.log('Email sent: ' + info.response)
+				res.status(200).send({ message: 'Email sent', success: true })
+			}
+		})
+	} catch (error) {
+		res
+			.status(500)
+			.json({ message: 'Something went wrong', error: error.message })
+	}
+}
 
-// 			res
-// 				.status(500)
-// 				.json({ message: 'Email could not be sent', error: error.message });
-// 		}
-// 	} catch (error) {
-// 		res
-// 			.status(500)
-// 			.json({ message: 'Something went wrong', error: error.message });
-// 	}
-// };
+// Reset Password
+exports.resetPassword = async (req, res) => {
+	// Compare token in URL params to hashed token
+	console.log("token : ",req.body.token);
+	const resetPasswordToken = crypto
+		.createHash('sha256')
+		.update(req.body.token)
+		.digest('hex')
 
+	console.log("resetPasswordToken : ",resetPasswordToken);
 
-//Reset Password
-// exports.resetPassword = async (req, res) => {
-// 	// Compare token in URL params to hashed token
-// 	const resetPasswordToken = crypto
-// 		.createHash('sha256')
-// 		.update(req.params.resetPasswordToken)
-// 		.digest('hex');
+	try {
+		//check whether a user exists with same reset password token and expiration time greater than current time
+		const user = await UserModel.findOne({
+			resetPasswordToken,
+			resetPasswordExpire: { $gt: Date.now() }
+		})
+		console.log("user : ",user);
 
-// 	try {
-// 		//check whether a user exists with same reset password token and expiration time greater than current time
-// 		const user = await User.findOne({
-// 			resetPasswordToken,
-// 			resetPasswordExpire: { $gt: Date.now() }
-// 		});
+		if (!user) {
+			return res
+				.status(400)
+				.json({ message: 'Invalid Token', error: error.message })  
+		} else {
+			console.log(user)
+		}
 
-// 		if (!user)
-// 			return res
-// 				.status(400)
-// 				.json({ message: 'Invalid Token', error: error.message });
+		//saving the new password
+		user.password = req.body.password
+		//remove the reset password token
+		user.resetPasswordToken = undefined
+		user.resetPasswordExpire = undefined
 
-// 		//saving the new password
-// 		user.password = req.body.password;
+		await user.save()
 
-// 		//remove the reset password token
-// 		user.resetPasswordToken = undefined;
-// 		user.resetPasswordExpire = undefined;
-
-// 		await user.save();
-
-// 		//creating a token
-// 		const token = jwt.sign(
-// 			{ email: user.email, id: user._id },
-// 			process.env.JWT_SECRET,
-// 			{ expiresIn: '1h' }
-// 		);
-
-// 		res.status(201).json({ success: true, result: user, token });
-// 	} catch (error) {
-// 		res
-// 			.status(500)
-// 			.json({ message: 'Something went wrong', error: error.message });
-// 	}
-// };
+		//creating a token
+		// const token = jwt.sign(
+		// 	{ email: user.email, id: user._id },
+		// 	process.env.JWT_SECRET,
+		// 	{ expiresIn: '1h' }
+		// );
+		console.log('success')  
+		res.status(200).json({ success: true }) 
+	} catch (error) {
+		res
+			.status(500)
+			.json({
+				message: 'Something went wrong',
+				error: error.message,
+				success: false
+			})
+	}
+}
 
 // get requests
 // exports.getRequests = async (req, res) => {
@@ -1044,42 +987,38 @@ exports.updateUser = async (req, res) => {
 // 	}
 // };
 
-
 // upload profile photo
-exports.uploadProfilePhoto = async(req,res,next) => {
-	const {uid} = req.params
+exports.uploadProfilePhoto = async (req, res, next) => {
+	const { uid } = req.params
 
-	try{
+	try {
 		const user = await UserModel.findById(uid)
-		
+
 		// if(user.profilePicture) {
 		// 	console.log(user.profilePicture.id);
 		// 	await cloudinary.uploader.destroy(user.profilePicture.id,{ type: "upload" })
 		// }
-		user.profilePicture = req.body;
+		user.profilePicture = req.body
 		// console.log(user.profilePicture);
 
 		await user.save()
-		res.json({mesg:"Successfully Image Uploaded!",user:user})
-	}  
-	catch(err) {
-		res.status(500).json({ message: 'Something went wrong', err: err.message})
+		res.json({ mesg: 'Successfully Image Uploaded!', user: user })
+	} catch (err) {
+		res.status(500).json({ message: 'Something went wrong', err: err.message })
 	}
 }
 
 //delete photo
-exports.deleteProfilePhoto = async(req,res,next) => {
-	const {uid} = req.params
+exports.deleteProfilePhoto = async (req, res, next) => {
+	const { uid } = req.params
 
-	try{
+	try {
 		const user = await UserModel.findById(uid)
 		const id = user.profilePicture.id
 		await cloudinary.uploader.destroy(user.profilePicture.id)
 		await user.save()
-		res.json({mesg:"Successfully Image Uploaded!",user:user})
-	}
-	catch(err) {
-		res.status(500).json({ message: 'Something went wrong', err: err.message})
+		res.json({ mesg: 'Successfully Image Uploaded!', user: user })
+	} catch (err) {
+		res.status(500).json({ message: 'Something went wrong', err: err.message })
 	}
 }
-

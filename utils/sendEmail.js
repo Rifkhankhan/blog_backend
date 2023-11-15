@@ -9,9 +9,16 @@ const sendEmail = async (options) => {
             pass: process.env.EMAIL_PASSWORD,
         },
     });
-
+    // var transporter = nodemailer.createTransport({
+    //     host: "sandbox.smtp.mailtrap.io",
+    //     port: 2525,
+    //     auth: {
+    //       user: "aallahu563@gmail.com",
+    //       pass: "allahuakbar123"
+    //     }
+    //   });
+    
     //setting up the email
-    console.log(options);
     const mailOptions = {  
         from: process.env.EMAIL_FROM,
         to: options.to,
