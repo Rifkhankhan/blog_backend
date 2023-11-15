@@ -44,10 +44,7 @@ const UserSchema = new Schema({
         type: Boolean,
         default: false
     },
-    profilePicture: {
-        id:String,
-        url:String  
-    },
+    profilePicture:String,
     coverPicture: String,
     bio: String,
     age:Number,

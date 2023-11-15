@@ -6,7 +6,7 @@ var fileUpload = require('../Middleware/file-upload.js');
 const {
 	usersignup,
 	usersignin,
-	autoLogin,forgotPassword, resetPassword,googleLogin
+	autoLogin,forgotPassword, resetPassword,googleLogin,googleSignup
 } = require('../Controllers/usercontroller.js')
 
 //add new request
@@ -23,6 +23,7 @@ router.put('/toggleLike', toggleLikeBlog);
 router.post('/login', usersignin);
 router.post('/signup', usersignup);
 router.put('/google', googleLogin);
+router.put('/googleSignup', googleSignup);
 router.post('/autologin', autoLogin);
 router.post('/forgotPassword', forgotPassword);
 router.put('/resetPassword', resetPassword);

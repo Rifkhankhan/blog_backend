@@ -449,6 +449,8 @@ exports.googleLogin = async (req, res) => {
 			{ expiresIn: '1h' }
 		)
 
+		await UserModel.updateOne({ $set: { profilePicture: req.body.picture } });
+
 		//sending the status message successful
 		res.status(200).json({
 			success: true,
@@ -457,6 +459,54 @@ exports.googleLogin = async (req, res) => {
 		})
 	
 		
+	} catch (error) {
+		res
+			.status(500)
+			.json({ message: 'Something went wrong', error: error.message })
+	}
+}
+
+//googleSignup
+exports.googleSignup = async (req, res) => {
+	// let {email,firs} = req.body
+	console.log(req.body);
+	// email,firtName,lastName,profile
+	
+	try {
+		//checking email already exists
+		const checkEmail = await UserModel.findOne({ email:req.body.email })
+		const users  = await UserModel.find()
+		let UserId = 'RifkhanApplicationId' + users.length
+		if (checkEmail)
+			return res
+				.status(409)
+				.json({ message: 'User with this email already exists' })
+
+	    
+	    // create password
+		const password = jwt.sign(
+			{ email: req.body.email, name:req.body.name },
+			'9892c70a8da9ad71f1829ad03c115408'
+		)
+		//creating a new user
+		const user = await UserModel.create({
+			name:req.body.name ? req.body.name : '',
+			email:req.body.email,
+			password,
+			profilePicture:req.body.picture ? req.body.picture : '',
+			homeDeliveryUserId: UserId
+		})
+
+		//creating a token
+
+		const token = jwt.sign(
+			{ email: user.email, id: user._id },
+			'9892c70a8da9ad71f1829ad03c115408',
+			{ expiresIn: '1h' }
+		)
+
+		//sending the user object and token as the response
+		res.status(200).json({ success: true, result: user, token })
 	} catch (error) {
 		res
 			.status(500)
