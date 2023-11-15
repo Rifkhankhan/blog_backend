@@ -5,11 +5,10 @@ const cloudinary = require('cloudinary').v2
 const nodemailer = require('nodemailer')
 const sendEmail = require('../utils/sendEmail')
 const transporter = require('../email-config')
-
 // Return "https" URLs by setting secure: true
 cloudinary.config({
 	secure: true
-})
+})  
 
 // for mail
 // const mailgun = require('mailgun-js');
@@ -17,7 +16,7 @@ cloudinary.config({
 // const mg = mailgun({ apiKey: process.env.MAILGUN_APIKEY, domain: DOMAIN });
 
 // loadash
-// const lodash = require('lodash');
+// const lodash = require('lodash'); 
 
 const UserModel = require('../Models/User')
 // const sendEmail = require('../utils/sendEmail');
@@ -113,7 +112,7 @@ exports.getCardList = async (req, res, next) => {
 		return next(err)
 	}
 }
-exports.addToCard = async (req, res, next) => {
+exports.addToCard = async (req, res, next) => {  
 	const { pid } = req.params
 	const { uid } = req.params
 
@@ -189,12 +188,12 @@ exports.autoLogin = async (req, res) => {
 
 	const secretKey = '9892c70a8da9ad71f1829ad03c115408'
 	//verify and decode the token
-
 	let userId
 	jwt.verify(cleanToken, secretKey, (err, decode) => {
 		if (err) {
 			console.log('Error verifying token', err.message)
 		} else {
+			console.log(decode);
 			userId = decode.id
 		}
 	})
@@ -316,6 +315,154 @@ exports.usersignup = async (req, res) => {
 	}
 }
 
+// forgot password
+exports.forgotPassword = async (req, res) => {
+	const { email } = req.body
+
+	try {
+		//finding user by email
+		const user = await UserModel.findOne({ email })
+
+		//if user doesn't exist
+		if (!user)
+			return res.status(400).json({ message: 'No user with this email' })
+
+		// Reset Token Gen and add to database hashed (private) version of token
+		const resetPasswordToken = user.getResetPasswordToken()
+		console.log("resetPasswordToken : ",resetPasswordToken);
+		await user.save()
+
+		// Create reset url to email to provided email
+		const resetPasswordUrl = `https://myblogs-dk3t.onrender.com/reset/${resetPasswordToken}`
+
+		// HTML Message
+		const message = `
+            <h1>You have requested a password reset</h1>
+            <p>Please click on this link to update your password!</p>
+            <a href=${resetPasswordUrl} clicktracking=off>${resetPasswordUrl}</a>
+        `
+
+		var transporter = nodemailer.createTransport({
+			service: 'gmail',
+			auth: {
+				user: 'aallahu563@gmail.com',
+				pass: 'pspk bsyv ywlp taar'
+			}
+		})
+
+		var mailOptions = {
+			from: 'aallahu563@gmail.com',
+			to: email,
+			subject: 'Password Reset',
+			text: resetPasswordUrl
+		}
+
+		transporter.sendMail(mailOptions, function (error, info) {
+			if (error) {
+				console.log(error)
+				res.status(400).send({ message: 'Email not sent', success: false })
+			} else {
+				console.log('Email sent: ' + info.response)
+				res.status(200).send({ message: 'Email sent', success: true })
+			}
+		})
+	} catch (error) {
+		res
+			.status(500)
+			.json({ message: 'Something went wrong', error: error.message })
+	}
+}
+
+// Reset Password
+exports.resetPassword = async (req, res) => {
+	// Compare token in URL params to hashed token
+	console.log("token : ",req.body.token);
+	const resetPasswordToken = crypto
+		.createHash('sha256')
+		.update(req.body.token)
+		.digest('hex')
+
+	console.log("resetPasswordToken : ",resetPasswordToken);
+
+	try {
+		//check whether a user exists with same reset password token and expiration time greater than current time
+		const user = await UserModel.findOne({
+			resetPasswordToken,
+			resetPasswordExpire: { $gt: Date.now() }
+		})
+		console.log("user : ",user);
+
+		if (!user) {
+			return res
+				.status(400)
+				.json({ message: 'Invalid Token', error: error.message })  
+		} else {
+			console.log(user)
+		}
+
+		//saving the new password
+		user.password = req.body.password
+		//remove the reset password token
+		user.resetPasswordToken = undefined
+		user.resetPasswordExpire = undefined
+
+		await user.save()
+
+		//creating a token
+		// const token = jwt.sign(
+		// 	{ email: user.email, id: user._id },
+		// 	process.env.JWT_SECRET,
+		// 	{ expiresIn: '1h' }
+		// );
+		console.log('success')  
+		res.status(200).json({ success: true }) 
+	} catch (error) {
+		res
+			.status(500)
+			.json({
+				message: 'Something went wrong',
+				error: error.message,
+				success: false
+			})
+	}
+}
+
+//google login
+exports.googleLogin = async (req, res) => {
+	let data = req.body
+	try {
+	
+		const user = await UserModel.find({email:data.email})
+  
+	
+
+		//if user doesn't exist
+		if (!user)
+			return res.status(400).json({ message: 'No user with this email' })
+
+		// update token
+		//creating a token
+		const secretKey = '9892c70a8da9ad71f1829ad03c115408'
+		const token = jwt.sign(
+			{ email: user[0].email, id: user[0]._id, secretKey: secretKey },
+			secretKey,
+			{ expiresIn: '1h' }
+		)
+
+		//sending the status message successful
+		res.status(200).json({
+			success: true,
+			result: user,
+			token
+		})
+	
+		
+	} catch (error) {
+		res
+			.status(500)
+			.json({ message: 'Something went wrong', error: error.message })
+	}
+}
 //update user controller
 exports.updateUser = async (req, res) => {
 	let userID = req.params.id
@@ -384,7 +531,7 @@ exports.updateUser = async (req, res) => {
 
 // 	let user;
 
-// 	try {
+// 	try { 
 // 		user = await User.findById(userID);
 // 	} catch (err) {
 // 		return next(err);
@@ -702,118 +849,6 @@ exports.updateUser = async (req, res) => {
 // 		return next(err);
 // 	}
 // };
-
-// forgot password
-exports.forgotPassword = async (req, res) => {
-	const { email } = req.body
-
-	try {
-		//finding user by email
-		const user = await UserModel.findOne({ email })
-
-		//if user doesn't exist
-		if (!user)
-			return res.status(400).json({ message: 'No user with this email' })
-
-		// Reset Token Gen and add to database hashed (private) version of token
-		const resetPasswordToken = user.getResetPasswordToken()
-		console.log("resetPasswordToken : ",resetPasswordToken);
-		await user.save()
-
-		// Create reset url to email to provided email
-		const resetPasswordUrl = `https://myblogs-dk3t.onrender.com/reset/${resetPasswordToken}`
-
-		// HTML Message
-		const message = `
-            <h1>You have requested a password reset</h1>
-            <p>Please click on this link to update your password!</p>
-            <a href=${resetPasswordUrl} clicktracking=off>${resetPasswordUrl}</a>
-        `
-
-		var transporter = nodemailer.createTransport({
-			service: 'gmail',
-			auth: {
-				user: 'aallahu563@gmail.com',
-				pass: 'pspk bsyv ywlp taar'
-			}
-		})
-
-		var mailOptions = {
-			from: 'aallahu563@gmail.com',
-			to: email,
-			subject: 'Password Reset',
-			text: resetPasswordUrl
-		}
-
-		transporter.sendMail(mailOptions, function (error, info) {
-			if (error) {
-				console.log(error)
-				res.status(400).send({ message: 'Email not sent', success: false })
-			} else {
-				console.log('Email sent: ' + info.response)
-				res.status(200).send({ message: 'Email sent', success: true })
-			}
-		})
-	} catch (error) {
-		res
-			.status(500)
-			.json({ message: 'Something went wrong', error: error.message })
-	}
-}
-
-// Reset Password
-exports.resetPassword = async (req, res) => {
-	// Compare token in URL params to hashed token
-	console.log("token : ",req.body.token);
-	const resetPasswordToken = crypto
-		.createHash('sha256')
-		.update(req.body.token)
-		.digest('hex')
-
-	console.log("resetPasswordToken : ",resetPasswordToken);
-
-	try {
-		//check whether a user exists with same reset password token and expiration time greater than current time
-		const user = await UserModel.findOne({
-			resetPasswordToken,
-			resetPasswordExpire: { $gt: Date.now() }
-		})
-		console.log("user : ",user);
-
-		if (!user) {
-			return res
-				.status(400)
-				.json({ message: 'Invalid Token', error: error.message })  
-		} else {
-			console.log(user)
-		}
-
-		//saving the new password
-		user.password = req.body.password
-		//remove the reset password token
-		user.resetPasswordToken = undefined
-		user.resetPasswordExpire = undefined
-
-		await user.save()
-
-		//creating a token
-		// const token = jwt.sign(
-		// 	{ email: user.email, id: user._id },
-		// 	process.env.JWT_SECRET,
-		// 	{ expiresIn: '1h' }
-		// );
-		console.log('success')  
-		res.status(200).json({ success: true }) 
-	} catch (error) {
-		res
-			.status(500)
-			.json({
-				message: 'Something went wrong',
-				error: error.message,
-				success: false
-			})
-	}
-}
 
 // get requests
 // exports.getRequests = async (req, res) => {

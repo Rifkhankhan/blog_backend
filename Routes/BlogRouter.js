@@ -6,12 +6,12 @@ var fileUpload = require('../Middleware/file-upload.js');
 const {
 	usersignup,
 	usersignin,
-	autoLogin,forgotPassword, resetPassword
+	autoLogin,forgotPassword, resetPassword,googleLogin
 } = require('../Controllers/usercontroller.js')
 
 //add new request
 router.post('/', CreateBlog); 
-// router.put('/:id', updateBlog);
+// router.put('/:id', updateBlog);  
 router.get('/', getBlogs);
 router.get('/:id', getBlog);
 router.put('/comment', pushComment);
@@ -22,6 +22,7 @@ router.put('/toggleLike', toggleLikeBlog);
 
 router.post('/login', usersignin);
 router.post('/signup', usersignup);
+router.put('/google', googleLogin);
 router.post('/autologin', autoLogin);
 router.post('/forgotPassword', forgotPassword);
 router.put('/resetPassword', resetPassword);
